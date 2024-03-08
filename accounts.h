@@ -2,6 +2,7 @@
 #include <iostream>
 #include <utility>
 #include <mutex>
+#include <chrono>
 
 class Account
 {
@@ -9,7 +10,7 @@ class Account
     int account_number;
     std::string account_holder_name;
     double account_balance;
-    std::mutex account_balance_m;
+    mutable std::mutex account_balance_m;
 
     template<typename FromAcc, typename ToAcc>
     friend class Transaction;
@@ -56,7 +57,7 @@ class Account
     bool deposit(double amount)
     {
         //std::lock_guard lock_account(account_balance_m);
-        if(amount > 0)
+        if(amount >= 0)
         {
             account_balance += amount;
             return true;
@@ -69,8 +70,13 @@ class Account
         }
     }
 
-    virtual bool withdraw(double amount)
-    {}
+    virtual bool withdraw(double amount) = 0;
+
+    double get_balance() const
+    {
+        std::lock_guard lock_account(account_balance_m);
+        return account_balance;
+    }
 };
 
 class Checking : public Account
