@@ -36,7 +36,7 @@ int main()
     else if(acc_type == 2)
         accounts.emplace_back(std::make_unique<Savings>(5, 5000, acc_num_cur, name, initial_bal));
 
-    std::cout << std::format("Your account was successfully created! Your account number is- {}\n \n", acc_num_cur);
+    std::cout << std::format("Your account was successfully created! Your account number is- {} \n \n", acc_num_cur);
     acc_num_cur++;
     int option;
 
@@ -71,7 +71,7 @@ int main()
             else if(acc_type == 2)
                 accounts.emplace_back(std::make_unique<Savings>(5, 5000, acc_num_cur, name, initial_bal));
 
-            std::cout << "Your account was successfully created! Your account number is- " << acc_num_cur << "\n \n";
+            std::cout << std::format("Your account was successfully created! Your account number is- {} \n \n", acc_num_cur);
             acc_num_cur++;
         } 
 

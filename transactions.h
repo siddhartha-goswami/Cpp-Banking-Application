@@ -158,13 +158,11 @@ class TransactionLogs
         int transaction_number = 1;
         for(TransactionRep& transaction : transaction_list)
         {
-            std::cout << "Transaction number- " << transaction_number << "\n \n";
-            std::cout << "Source account: " << transaction.source_acc_number << "\n";
-            std::cout << "Target account: " << transaction.target_acc_number << "\n";
-            std::cout << "Transaction amount: " << transaction.transaction_amount << "\n \n";
+            std::cout << std::format("Transaction number- {} \n \n", transaction_number);
+            std::cout << std::format("Source account: {} \n", transaction.source_acc_number);
+            std::cout << std::format("Target account: {} \n", transaction.target_acc_number);
+            std::cout << std::format("Transaction amount: {} \n \n", transaction.transaction_amount);
             transaction_number++;
         }
     }
 };
-
-
