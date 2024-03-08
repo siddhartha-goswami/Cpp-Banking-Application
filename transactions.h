@@ -81,7 +81,7 @@ class SelfTransaction : public TransactionBase
                 }
 
                 completion_promise.set_value(deposit_success);
-            }).detach();
+            }).join();
 
             return completion_fut;
         }
