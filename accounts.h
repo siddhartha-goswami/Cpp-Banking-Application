@@ -56,7 +56,6 @@ class Account
 
     bool deposit(double amount)
     {
-        //std::lock_guard lock_account(account_balance_m);
         if(amount >= 0)
         {
             account_balance += amount;
@@ -95,7 +94,6 @@ class Checking : public Account
 
     bool withdraw(double amount) override
     {
-        //std::lock_guard lock_account(account_balance_m);
         if(amount <= account_balance)
         {
             account_balance -= amount;
@@ -127,7 +125,6 @@ class Savings : public Account
 
     bool withdraw(double amount) override
     {
-        //std::lock_guard lock_account(account_balance_m);
         if(amount <= account_balance && amount <= withdraw_limit)
         {
             account_balance -= amount;
@@ -144,6 +141,58 @@ class Savings : public Account
 
             return false;
         }
+    }
+
+    void calc_add_interest()
+    {
+        std::lock_guard lock_account(account_balance_m);
+        account_balance += account_balance * interest_rate/100;
+    }
+};
+
+class FixedDeposit : public Account
+{
+    private:
+    double interest_rate;
+
+    template<typename FromAcc, typename ToAcc>
+    friend class Transaction;
+
+    public:
+
+    template<typename... Args>
+    FixedDeposit(double rate, Args&&... args) :
+    interest_rate(rate), Account(std::forward<Args>(args)...) {}
+
+    bool withdraw(double amount) override
+    {
+        return false;
+    }
+
+    void calc_add_interest()
+    {
+        std::lock_guard lock_account(account_balance_m);
+        account_balance += account_balance * interest_rate/100;
+    }
+};
+
+class Priority : public Account
+{
+    private:
+    double interest_rate;
+
+    template<typename FromAcc, typename ToAcc>
+    friend class Transaction;
+
+    public:
+
+    template<typename... Args>
+    Priority(double rate, Args&&... args) :
+    interest_rate(rate), Account(std::forward<Args>(args)...) {}
+
+    bool withdraw(double amount) override
+    {
+        return false;
     }
 
     void calc_add_interest()

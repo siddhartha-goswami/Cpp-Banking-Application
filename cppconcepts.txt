@@ -1,0 +1,42 @@
+1. Variadics (show info for all acc)
+
+2. Streams, buffers and regular expressions (to write transaction/
+account info to a file and search using regex)
+
+3. Type traits (allows transaction, allows withdrawals, allows display, bears interest)
+
+4. Concepts (to constrain transactions, displays and interest calculation)
+
+Account management and info module
+Transaction logging module
+Transaction validation module
+
+(Fixed deposit (does not allow withdrawals))
+Priority account (can only transact with other priority accounts)
+
+/*
+template<typename AccountType>
+class InterestCalculator;
+
+// Specialization for Savings Account
+template<>
+class InterestCalculator<SavingsAccount> {
+public:
+    static double calculateInterest(double balance) {
+        return balance * 0.03;  // 3% interest rate
+    }
+};
+
+// Specialization for Fixed Deposit Account
+template<>
+class InterestCalculator<FixedDepositAccount> {
+public:
+    static double calculateInterest(double balance) {
+        return balance * 0.05;  // 5% interest rate
+    }
+};
+
+// Usage
+double savingsInterest = InterestCalculator<SavingsAccount>::calculateInterest(1000);
+double fixedInterest = InterestCalculator<FixedDepositAccount>::calculateInterest(1000);
+*/

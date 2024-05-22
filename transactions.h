@@ -10,13 +10,18 @@
 #include <shared_mutex>
 #include <memory>
 #include <queue>
+#include <atomic>
 
 class TransactionBase
 {
     public:
+    static int current_transaction_number;
     virtual ~TransactionBase() = default;
-    virtual std::future<bool> execute_transaction() = 0;
+    virtual bool execute_transaction() = 0;
+    virtual int get_transaction_number() = 0;
 };
+
+int TransactionBase::current_transaction_number = 1;
 
 template<typename FromAcc, typename ToAcc>
 class Transaction : public TransactionBase
@@ -25,27 +30,30 @@ class Transaction : public TransactionBase
         FromAcc& source_acc;
         ToAcc& target_acc;
         double transaction_amount;
+        int transaction_number;
 
     public:
         Transaction(FromAcc& from, ToAcc& to, double const t_amount)
-        : source_acc(from), target_acc(to), transaction_amount(t_amount) {}
-
-        std::future<bool> execute_transaction()
+        : source_acc(from), target_acc(to), transaction_amount(t_amount) 
         {
+            transaction_number = TransactionBase::current_transaction_number;
+            TransactionBase::current_transaction_number++;
+        }
 
-            std::promise<bool> completion_promise;
-            std::future<bool> completion_fut = completion_promise.get_future();
-            std::thread([&, completion_promise = std::move(completion_promise)]() mutable
-            {
-                std::scoped_lock lock(source_acc.account_balance_m, target_acc.account_balance_m);
-                std::this_thread::sleep_for(std::chrono::seconds(10));
-                bool withdraw_success = source_acc.withdraw(transaction_amount);
-                bool deposit_success = target_acc.deposit(transaction_amount);
-                bool transaction_success = withdraw_success && deposit_success;
-                completion_promise.set_value(transaction_success);
-            }).detach();
+        bool execute_transaction()
+        {
+            std::scoped_lock lock(source_acc.account_balance_m, target_acc.account_balance_m);
+            std::this_thread::sleep_for(std::chrono::seconds(5));
+            bool withdraw_success = source_acc.withdraw(transaction_amount);
+            bool deposit_success = target_acc.deposit(transaction_amount);
+            bool transaction_success = withdraw_success && deposit_success;
 
-            return completion_fut;
+            return transaction_success;
+        }
+
+        int get_transaction_number()
+        {
+            return this->transaction_number;
         }
 };
 
@@ -55,76 +63,131 @@ class SelfTransaction : public TransactionBase
     public:
         Acc& source_acc;
         double transaction_amount;
+        int transaction_number;
 
     public:
         SelfTransaction(Acc& source, double const t_amount)
-        : source_acc(source), transaction_amount(t_amount) {}
-
-        std::future<bool> execute_transaction()
+        : source_acc(source), transaction_amount(t_amount) 
         {
+            transaction_number = TransactionBase::current_transaction_number;
+            TransactionBase::current_transaction_number++;
+        }
 
-            std::promise<bool> completion_promise;
-            std::future<bool> completion_fut = completion_promise.get_future();
-            std::thread([&, completion_promise = std::move(completion_promise)]() mutable
+        bool execute_transaction()
+        {
+            std::scoped_lock lock(source_acc.account_balance_m);
+            bool deposit_success;
+            std::this_thread::sleep_for(std::chrono::seconds(5));
+            if(transaction_amount >= 0)
             {
-                std::scoped_lock lock(source_acc.account_balance_m);
-                std::this_thread::sleep_for(std::chrono::seconds(10));
-                bool deposit_success;
-                if(transaction_amount >= 0)
-                {
-                    deposit_success = source_acc.deposit(transaction_amount);
-                }
+                deposit_success = source_acc.deposit(transaction_amount);
+            }
 
-                else
-                {
-                    deposit_success = source_acc.withdraw(transaction_amount);
-                }
+            else
+            {
+                deposit_success = source_acc.withdraw(transaction_amount);
+            }
 
-                completion_promise.set_value(deposit_success);
-            }).join();
+            return deposit_success;
+        }
 
-            return completion_fut;
+        int get_transaction_number()
+        {
+            return this->transaction_number;
         }
 };
 
 class TransactionManager
 {
     public:
-    std::queue<std::unique_ptr<TransactionBase>> transaction_queue;
+    std::vector<std::thread> transaction_threads;
     std::mutex queue_mutex;
-    std::condition_variable queue_condition;
+    std::mutex cout_mutex;
+    std::queue<std::unique_ptr<TransactionBase>> transaction_queue;
+    std::condition_variable cv;
+    bool stop_flag = false;
+    std::atomic<int> num_transactions_tbe;
+    std::atomic_flag atf = ATOMIC_FLAG_INIT;
 
     TransactionManager()
     {
-        std::thread exec_thread(transaction_executer, this);
-        exec_thread.detach();
+        create_tm();
+    }
+
+    void create_tm()
+    {
+        stop_flag = false;
+
+        for(int i = 0; i < 5; i++)
+        {
+            transaction_threads.emplace_back([this]()
+            {
+                while(true)
+                {
+                    std::unique_ptr<TransactionBase> curr_transaction;
+                    
+                    {
+                        std::unique_lock<std::mutex> ulock(queue_mutex);
+                        cv.wait(ulock, [this](){ return !transaction_queue.empty() || 
+                        stop_flag;});
+                        if (stop_flag && transaction_queue.empty()) 
+                        {
+                            return; 
+                        }
+                        curr_transaction = std::move(transaction_queue.front());
+                        transaction_queue.pop();
+                    }
+
+                    bool transaction_res = curr_transaction->execute_transaction();
+
+                    if(transaction_res)
+                    {
+                        std::unique_lock<std::mutex> ulock(cout_mutex);
+                        std::cout << "Transaction " 
+                        << curr_transaction->get_transaction_number() << " was successful\n";
+                    }
+
+                    num_transactions_tbe.fetch_sub(1, std::memory_order_release);
+
+                    if(num_transactions_tbe.load(std::memory_order_acquire) == 0)
+                    {
+                        atf.test_and_set();
+                        atf.notify_one();
+                    }
+                }
+            }
+            );
+        }
+    }
+
+    void set_sim_trans(int set_num)
+    {
+        num_transactions_tbe.store(set_num, std::memory_order_release);
+    }
+
+
+    void complete_all_transactions()
+    {
+        atf.wait(false);
+
+        {
+            std::unique_lock<std::mutex> ulock(queue_mutex);
+            stop_flag = true;
+        }
+        cv.notify_all();
+        for(auto& thr : transaction_threads)
+        {
+            thr.join();
+        }
     }
 
     void enqueue_transaction(std::unique_ptr<TransactionBase> transaction)
     {
-        std::unique_lock<std::mutex> lock(queue_mutex);
-        transaction_queue.push(std::move(transaction));
-        queue_condition.notify_one();
-    }
-
-    void transaction_executer()
-    {
-        while(true)
-        {
-            std::unique_lock<std::mutex> trans_queue_lock(queue_mutex);
-            queue_condition.wait(trans_queue_lock, [this](){return !transaction_queue.empty();});
-
-            auto transaction = std::move(transaction_queue.front());
-            transaction_queue.pop();
-
-            trans_queue_lock.unlock();
-
-            std::future<bool> res_fut = transaction->execute_transaction();
-            if(res_fut.get())
-            {
-                std::cout << "\nTransaction successful" << std::endl;
-            }
-        }
+        { 
+            std::unique_lock<std::mutex> ulock(queue_mutex); 
+            transaction_queue.emplace(std::move(transaction)); 
+        } 
+        cv.notify_one();
     }
 };
 

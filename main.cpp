@@ -9,9 +9,11 @@
 #include <random>
 #include <chrono>
 #include <queue>
+#include "accountmanager.h"
 
-int main() 
+int main()
 {
+    AccountManager am;
     std::vector<std::unique_ptr<Account>> accounts;
     TransactionManager tmanager;
     TransactionLogs tlogs;
@@ -175,12 +177,28 @@ int main()
 
     else if(mode == 2)
     {
+        int num_trans_sim;
+        std::cout << "Enter number of transactions to simulate- \n";
+        std::cin >> num_trans_sim;
+
+        tmanager.set_sim_trans(num_trans_sim);
+        
         accounts.emplace_back(std::make_unique<Checking>(1000, 10000, "Jack", 45236));
         accounts.emplace_back(std::make_unique<Checking>(500, 10001, "Henry", 22345));
         accounts.emplace_back(std::make_unique<Savings>(7, 9999, 10002, "Gauss", 63462));
-        std::vector<int> elements = {10000, 10001, 10002};
+        accounts.emplace_back(std::make_unique<Checking>(1000, 10003, "John", 53453));
+        accounts.emplace_back(std::make_unique<Checking>(500, 10004, "Hank", 64346));
+        accounts.emplace_back(std::make_unique<Savings>(7, 9999, 10005, "Goliath", 23235));
+        accounts.emplace_back(std::make_unique<Checking>(1000, 10006, "Kone", 34467));
+        accounts.emplace_back(std::make_unique<Checking>(500, 10007, "House", 34478));
+        accounts.emplace_back(std::make_unique<Savings>(7, 9999, 10008, "Jerry", 24578));
+        accounts.emplace_back(std::make_unique<Checking>(1000, 10009, "Billy", 36578));
+        accounts.emplace_back(std::make_unique<Checking>(500, 10010, "Jimmy", 24356));
+        accounts.emplace_back(std::make_unique<Savings>(7, 9999, 10011, "Polly", 75534));
+        std::vector<int> elements = {10000, 10001, 10002, 10003, 10004, 10005, 10006, 10007, 
+        10008, 10009, 10010, 10011};
         int num_transactions = 1;
-        while(num_transactions <= 50)
+        while(num_transactions <= num_trans_sim)
         {
             std::random_device rd;
             std::mt19937 generator(rd());
@@ -200,8 +218,10 @@ int main()
             tlogs.record_transaction(source_account_num, target_account_num, transfer_amount);
 
             num_transactions++;
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
+
+        tmanager.complete_all_transactions();
 
         tlogs.display_transactions();
         for(auto& acc : accounts)
@@ -209,7 +229,6 @@ int main()
             std::cout << *acc << std::endl;
         }
     }
-    
 
     return 0;
 }
