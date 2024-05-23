@@ -8,8 +8,8 @@
 #include <random>
 #include <chrono>
 #include <queue>
+#include "accounts.h"
 #include "accountmanager.h"
-#include "accounttraits.h"
 
 int main()
 {

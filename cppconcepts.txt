@@ -1,10 +1,10 @@
 1. Abstract factory pattern to create accounts of different types ✅
 
-2. Type traits (allows transaction, allows withdrawals, allows display, bears interest)
+2. Type traits (allows transaction, bears interest) ✅
 
-3. Concepts (to constrain transactions, withdrawals, displays and interest calculation)
+3. Concepts (to constrain interest calculation)
 
-4. Streams, buffers and regular expressions (to write transaction/
+4. Streams and regular expressions (to write transaction/
 account info to a file and search using regex)
 
 Phase 1- Account creation and storing using factory pattern ✅

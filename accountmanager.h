@@ -79,10 +79,4 @@ class AccountManager
     }
 };
 
-template <typename... AccTypes>
-void displayAccInfo(AccTypes... args)
-{
-    
-}
-
 #endif

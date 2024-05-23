@@ -28,4 +28,7 @@ struct bears_interest<Savings> : public std::true_type {};
 template<>
 struct bears_interest<FixedDeposit> : public std::true_type {};
 
+template<typename T>
+concept BearsInterest = (bears_interest<T>::value);
+
 #endif

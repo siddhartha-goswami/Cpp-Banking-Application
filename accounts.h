@@ -6,6 +6,7 @@
 #include <utility>
 #include <mutex>
 #include <chrono>
+#include <type_traits>
 
 class Account
 {
@@ -182,12 +183,6 @@ class Savings : public Account
             return false;
         }
     }
-
-    void calc_add_interest()
-    {
-        std::lock_guard lock_account(account_balance_m);
-        account_balance += account_balance * interest_rate/100;
-    }
 };
 
 class FixedDeposit : public Account
@@ -215,12 +210,40 @@ class FixedDeposit : public Account
     {
         return false;
     }
-
-    void calc_add_interest()
-    {
-        std::lock_guard lock_account(account_balance_m);
-        account_balance += account_balance * interest_rate/100;
-    }
 };
+
+template<typename T>
+struct allows_transaction : public std::false_type {};
+
+template<>
+struct allows_transaction<Checking> : public std::true_type {};
+
+template<>
+struct allows_transaction<Savings> : public std::true_type {};
+
+template<>
+struct allows_transaction<FixedDeposit> : public std::false_type {};
+
+template<typename T>
+struct bears_interest : public std::false_type {};
+
+template<>
+struct bears_interest<Checking> : public std::false_type {};
+
+template<>
+struct bears_interest<Savings> : public std::true_type {};
+
+template<>
+struct bears_interest<FixedDeposit> : public std::true_type {};
+
+template<typename T>
+concept BearsInterest = (bears_interest<T>::value);
+
+template <typename AccType>
+requires BearsInterest<AccType>
+void calc_add_interest(AccType& acc)
+{
+    acc.account_balance += acc.account_balance * acc.interest_rate/100;
+}
 
 #endif
