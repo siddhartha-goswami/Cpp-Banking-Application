@@ -9,6 +9,7 @@
 #include <chrono>
 #include <queue>
 #include "accountmanager.h"
+#include "accounttraits.h"
 
 int main()
 {
@@ -29,7 +30,7 @@ int main()
         std::getline(std::cin, name);
 
         int acc_type;
-        std::cout << "Enter account type (Press 1 for checking account, 2 for savings account, 3 for fixed deposit, 4 for priority account)\n";
+        std::cout << "Enter account type (Press 1 for checking account, 2 for savings account, 3 for fixed deposit)\n";
         std::cin >> acc_type;
 
         std::cout << "Enter initial balance: \n";
@@ -53,12 +54,6 @@ int main()
         else if(acc_type == 3)
         {
             Account& acc = am.add_account<FixedDeposit>();
-            acc.set_details(acc_num_cur, name, initial_bal);
-        }
-
-        else if(acc_type == 4)
-        {
-            Account& acc = am.add_account<Priority>();
             acc.set_details(acc_num_cur, name, initial_bal);
         }
 
@@ -105,11 +100,6 @@ int main()
                 else if(acc_type == 3)
                 {
                     Account& acc = am.add_account<FixedDeposit>();
-                    acc.set_details(acc_num_cur, name, initial_bal);
-                }
-                else if(acc_type == 4)
-                {
-                    Account& acc = am.add_account<Priority>();
                     acc.set_details(acc_num_cur, name, initial_bal);
                 }
 
@@ -232,13 +222,13 @@ int main()
         Account& acc6 = am.add_account<Savings>();
         acc6.set_details(10005, "Gerald", 23235);
 
-        Account& acc7 = am.add_account<Checking>();
+        Account& acc7 = am.add_account<Savings>();
         acc7.set_details(10006, "Kane", 34467);
 
-        Account& acc8 = am.add_account<Checking>();
+        Account& acc8 = am.add_account<Savings>();
         acc8.set_details(10007, "Jude", 34478);
 
-        Account& acc9 = am.add_account<Checking>();
+        Account& acc9 = am.add_account<FixedDeposit>();
         acc9.set_details(10008, "Declan", 24578);
 
         Account& acc10 = am.add_account<Savings>();
@@ -260,6 +250,26 @@ int main()
             double transfer_amount = distribution(generator);
             int source_location = source_account_num % 10000;
             int target_location = target_account_num % 10000;
+
+            if((am.get_account(source_account_num).accType == "Checking" || am.get_account(source_account_num).accType == "Savings")
+            && (am.get_account(target_account_num).accType == "Checking" || am.get_account(target_account_num).accType == "Savings"))
+            {
+                if constexpr (!(allows_transaction<std::remove_reference_t<Checking&>>::value && allows_transaction<std::remove_reference_t<Savings&>>::value))
+                {
+                    num_transactions++;
+                    continue;
+                }
+            }
+            
+            if((am.get_account(source_account_num).accType == "FixedDeposit" || am.get_account(target_account_num).accType == "FixedDeposit"))
+            {
+                if constexpr (!(allows_transaction<std::remove_reference_t<FixedDeposit&>>::value))
+                {
+                    num_transactions++;
+                    std::cout << "Came here\n";
+                    continue;
+                }
+            }
                     
             std::unique_ptr<TransactionBase> ptr_trans1 = std::make_unique<Transaction<decltype(am.get_account(source_account_num)), decltype(am.get_account(target_account_num))>> 
             (am.get_account(source_account_num), am.get_account(target_account_num), transfer_amount);

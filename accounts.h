@@ -1,3 +1,6 @@
+#ifndef ACC_H
+#define ACC_H
+
 #include <string>
 #include <iostream>
 #include <utility>
@@ -11,6 +14,7 @@ class Account
     std::string account_holder_name;
     double account_balance;
     mutable std::mutex account_balance_m;
+    std::string accType = "";
 
     template<typename FromAcc, typename ToAcc>
     friend class Transaction;
@@ -56,22 +60,15 @@ class Account
         return os;
     }
 
-    bool deposit(double amount)
+    virtual bool deposit(double amount)
     {
-        if(amount >= 0)
-        {
-            account_balance += amount;
-            return true;
-        }
-
-        else
-        {
-            std::cout << "Cannot deposit negative amount" << std::endl;
-            return false;
-        }
+        return false;
     }
 
-    virtual bool withdraw(double amount) = 0;
+    virtual bool withdraw(double amount)
+    {
+        return false;
+    }
 
     double get_balance() const
     {
@@ -91,6 +88,7 @@ class Checking : public Account
 {
     private:
     double overdraft_limit = 1000;
+    std::string accType = "Savings";
 
     template<typename FromAcc, typename ToAcc>
     friend class Transaction;
@@ -116,6 +114,21 @@ class Checking : public Account
             return false;
         }
     }
+
+    bool deposit(double amount) override
+    {
+        if(amount >= 0)
+        {
+            account_balance += amount;
+            return true;
+        }
+
+        else
+        {
+            std::cout << "Cannot deposit negative amount" << std::endl;
+            return false;
+        }
+    }
 };
 
 class Savings : public Account
@@ -123,6 +136,7 @@ class Savings : public Account
     private:
     double interest_rate = 3;
     double withdraw_limit = 1000;
+    std::string accType = "Savings";
 
     template<typename FromAcc, typename ToAcc>
     friend class Transaction;
@@ -154,6 +168,21 @@ class Savings : public Account
         }
     }
 
+    bool deposit(double amount) override
+    {
+        if(amount >= 0)
+        {
+            account_balance += amount;
+            return true;
+        }
+
+        else
+        {
+            std::cout << "Cannot deposit negative amount" << std::endl;
+            return false;
+        }
+    }
+
     void calc_add_interest()
     {
         std::lock_guard lock_account(account_balance_m);
@@ -165,6 +194,7 @@ class FixedDeposit : public Account
 {
     private:
     double interest_rate = 7;
+    std::string accType = "FixedDeposit";
 
     template<typename FromAcc, typename ToAcc>
     friend class Transaction;
@@ -176,6 +206,11 @@ class FixedDeposit : public Account
     template<typename... Args>
     FixedDeposit(Args&&... args) : Account(std::forward<Args>(args)...) {}
 
+    bool deposit(double amount)
+    {
+        return false;
+    }
+
     bool withdraw(double amount) override
     {
         return false;
@@ -188,29 +223,4 @@ class FixedDeposit : public Account
     }
 };
 
-class Priority : public Account
-{
-    private:
-    double interest_rate = 10;
-
-    template<typename FromAcc, typename ToAcc>
-    friend class Transaction;
-
-    public:
-
-    Priority() {}
-
-    template<typename... Args>
-    Priority(Args&&... args) : Account(std::forward<Args>(args)...) {}
-
-    bool withdraw(double amount) override
-    {
-        return false;
-    }
-
-    void calc_add_interest()
-    {
-        std::lock_guard lock_account(account_balance_m);
-        account_balance += account_balance * interest_rate/100;
-    }
-};
+#endif

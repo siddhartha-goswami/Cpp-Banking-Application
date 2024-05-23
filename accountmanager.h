@@ -1,3 +1,6 @@
+#ifndef ACCMAN_H
+#define ACCMAN_H
+
 #include <vector>
 #include <memory>
 #include "accounts.h"
@@ -35,15 +38,6 @@ class FixedDepositFactory : public AccountFactory
     }
 };
 
-class PriorityAccountFactory : public AccountFactory
-{
-    public:
-    std::unique_ptr<Account> create_account() override
-    {
-        return std::make_unique<Priority>();
-    }
-};
-
 class AccountManager
 {
     public:
@@ -51,14 +45,12 @@ class AccountManager
     std::unique_ptr<AccountFactory> checkingFactory;
     std::unique_ptr<AccountFactory> savingsFactory;
     std::unique_ptr<AccountFactory> fixedDepositFactory;
-    std::unique_ptr<AccountFactory> priorityFactory;
 
     AccountManager()
     {
         checkingFactory = std::make_unique<CheckingAccountFactory>();
         savingsFactory = std::make_unique<SavingsAccountFactory>();
         fixedDepositFactory = std::make_unique<FixedDepositFactory>();
-        priorityFactory = std::make_unique<PriorityAccountFactory>();
     }
 
     template <typename AccType>
@@ -76,10 +68,6 @@ class AccountManager
         {
             accounts.emplace_back(fixedDepositFactory->create_account());
         }
-        else if constexpr (std::is_same_v<AccType, Priority>)
-        {
-            accounts.emplace_back(priorityFactory->create_account());
-        }
 
         return *(accounts.back());
     }
@@ -96,3 +84,5 @@ void displayAccInfo(AccTypes... args)
 {
     
 }
+
+#endif

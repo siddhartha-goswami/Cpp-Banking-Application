@@ -1,3 +1,6 @@
+#ifndef TRANSACTION_H
+#define TRANSACTION_H
+
 #include <string>
 #include <mutex>
 #include <iostream>
@@ -229,3 +232,5 @@ class TransactionLogs
         }
     }
 };
+
+#endif
