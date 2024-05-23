@@ -1,4 +1,3 @@
-#include "accounts.h"
 #include "transactions.h"
 #include <iostream>
 #include <future>
@@ -14,7 +13,6 @@
 int main()
 {
     AccountManager am;
-    std::vector<std::unique_ptr<Account>> accounts;
     TransactionManager tmanager;
     TransactionLogs tlogs;
 
@@ -31,7 +29,7 @@ int main()
         std::getline(std::cin, name);
 
         int acc_type;
-        std::cout << "Enter account type (Press 1 for checking account, 2 for savings account)\n";
+        std::cout << "Enter account type (Press 1 for checking account, 2 for savings account, 3 for fixed deposit, 4 for priority account)\n";
         std::cin >> acc_type;
 
         std::cout << "Enter initial balance: \n";
@@ -41,9 +39,28 @@ int main()
         long int acc_num_cur = 10000;
 
         if(acc_type == 1)
-            accounts.emplace_back(std::make_unique<Checking>(1000, acc_num_cur, name, initial_bal));
+        {
+            Account& acc = am.add_account<Checking>();
+            acc.set_details(acc_num_cur, name, initial_bal);
+        }
+
         else if(acc_type == 2)
-            accounts.emplace_back(std::make_unique<Savings>(5, 5000, acc_num_cur, name, initial_bal));
+        {
+            Account& acc = am.add_account<Savings>();
+            acc.set_details(acc_num_cur, name, initial_bal);
+        }
+
+        else if(acc_type == 3)
+        {
+            Account& acc = am.add_account<FixedDeposit>();
+            acc.set_details(acc_num_cur, name, initial_bal);
+        }
+
+        else if(acc_type == 4)
+        {
+            Account& acc = am.add_account<Priority>();
+            acc.set_details(acc_num_cur, name, initial_bal);
+        }
 
         std::cout << std::format("Your account was successfully created! Your account number is- {} \n \n", acc_num_cur);
         acc_num_cur++;
@@ -68,7 +85,7 @@ int main()
                 std::getline(std::cin, name);
 
                 int acc_type;
-                std::cout << "Enter account type (Press 1 for checking account, 2 for savings account)\n";
+                std::cout << "Enter account type (Press 1 for checking account, 2 for savings account, 3 for fixed deposit account, 4 for priority account)\n";
                 std::cin >> acc_type;
 
                 std::cout << "Enter initial balance: \n";
@@ -76,9 +93,25 @@ int main()
                 std::cin >> initial_bal;
 
                 if(acc_type == 1)
-                    accounts.emplace_back(std::make_unique<Checking>(1000, acc_num_cur, name, initial_bal));
+                {
+                    Account& acc = am.add_account<Checking>();
+                    acc.set_details(acc_num_cur, name, initial_bal);
+                }
                 else if(acc_type == 2)
-                    accounts.emplace_back(std::make_unique<Savings>(5, 5000, acc_num_cur, name, initial_bal));
+                {
+                    Account& acc = am.add_account<Savings>();
+                    acc.set_details(acc_num_cur, name, initial_bal);
+                }
+                else if(acc_type == 3)
+                {
+                    Account& acc = am.add_account<FixedDeposit>();
+                    acc.set_details(acc_num_cur, name, initial_bal);
+                }
+                else if(acc_type == 4)
+                {
+                    Account& acc = am.add_account<Priority>();
+                    acc.set_details(acc_num_cur, name, initial_bal);
+                }
 
                 std::cout << std::format("Your account was successfully created! Your account number is- {} \n \n", acc_num_cur);
                 acc_num_cur++;
@@ -95,14 +128,13 @@ int main()
                     std::cout << "Enter account number- \n";
                     int source;
                     std::cin >> source;
-                    int source_location = source % 10000;
                     
                     int deposit_amount;
                     std::cout << "Enter deposit amount-\n";
                     std::cin >> deposit_amount;
 
-                    std::unique_ptr<TransactionBase> ptr_trans1 = std::make_unique<SelfTransaction<decltype(*(accounts[source_location]))>> 
-                    (*(accounts[source_location]), deposit_amount);
+                    std::unique_ptr<TransactionBase> ptr_trans1 = std::make_unique<SelfTransaction<decltype(am.get_account(source))>> 
+                    (am.get_account(source), deposit_amount);
 
                     tmanager.enqueue_transaction(std::move(ptr_trans1));
                     tlogs.record_transaction(source, source, deposit_amount);
@@ -113,14 +145,13 @@ int main()
                     std::cout << "Enter account number- \n";
                     int source;
                     std::cin >> source;
-                    int source_location = source % 10000;
                     
                     int withdrawal_amount;
                     std::cout << "Enter withdrawal amount- \n";
                     std::cin >> withdrawal_amount;
 
-                    std::unique_ptr<TransactionBase> ptr_trans1 = std::make_unique<SelfTransaction<decltype(*(accounts[source_location]))>> 
-                    (*(accounts[source_location]), (-1)*withdrawal_amount);
+                    std::unique_ptr<TransactionBase> ptr_trans1 = std::make_unique<SelfTransaction<decltype(am.get_account(source))>> 
+                    (am.get_account(source), (-1)*withdrawal_amount);
 
                     tmanager.enqueue_transaction(std::move(ptr_trans1));
                     tlogs.record_transaction(source, source, withdrawal_amount);
@@ -143,8 +174,8 @@ int main()
                     int source_location = source % 10000;
                     int target_location = target % 10000;
                     
-                    std::unique_ptr<TransactionBase> ptr_trans1 = std::make_unique<Transaction<decltype(*(accounts[source_location])), decltype(*(accounts[target_location]))>> 
-                    (*(accounts[source_location]), *(accounts[target_location]), transfer_amount);
+                    std::unique_ptr<TransactionBase> ptr_trans1 = std::make_unique<Transaction<decltype(am.get_account(source)), decltype(am.get_account(target))>> 
+                    (am.get_account(source), am.get_account(target), transfer_amount);
                     
                     tmanager.enqueue_transaction(std::move(ptr_trans1));
                     tlogs.record_transaction(source, target, transfer_amount);
@@ -160,7 +191,7 @@ int main()
             
             else if (option == 4) 
             {
-                for(auto& acc : accounts)
+                for(auto& acc : am.accounts)
                 {
                     std::cout << *acc << std::endl;
                 }
@@ -182,21 +213,40 @@ int main()
         std::cin >> num_trans_sim;
 
         tmanager.set_sim_trans(num_trans_sim);
-        
-        accounts.emplace_back(std::make_unique<Checking>(1000, 10000, "Jack", 45236));
-        accounts.emplace_back(std::make_unique<Checking>(500, 10001, "Henry", 22345));
-        accounts.emplace_back(std::make_unique<Savings>(7, 9999, 10002, "Gauss", 63462));
-        accounts.emplace_back(std::make_unique<Checking>(1000, 10003, "John", 53453));
-        accounts.emplace_back(std::make_unique<Checking>(500, 10004, "Hank", 64346));
-        accounts.emplace_back(std::make_unique<Savings>(7, 9999, 10005, "Goliath", 23235));
-        accounts.emplace_back(std::make_unique<Checking>(1000, 10006, "Kone", 34467));
-        accounts.emplace_back(std::make_unique<Checking>(500, 10007, "House", 34478));
-        accounts.emplace_back(std::make_unique<Savings>(7, 9999, 10008, "Jerry", 24578));
-        accounts.emplace_back(std::make_unique<Checking>(1000, 10009, "Billy", 36578));
-        accounts.emplace_back(std::make_unique<Checking>(500, 10010, "Jimmy", 24356));
-        accounts.emplace_back(std::make_unique<Savings>(7, 9999, 10011, "Polly", 75534));
+
+        Account& acc1 = am.add_account<Checking>();
+        acc1.set_details(10000, "Jack", 45236);
+
+        Account& acc2 = am.add_account<Checking>();
+        acc2.set_details(10001, "Henry", 22345);
+
+        Account& acc3 = am.add_account<Savings>();
+        acc3.set_details(10002, "Gauss", 63462);
+
+        Account& acc4 = am.add_account<Checking>();
+        acc4.set_details(10003, "John", 53453);
+
+        Account& acc5 = am.add_account<Checking>();
+        acc5.set_details(10004, "Harry", 64346);
+
+        Account& acc6 = am.add_account<Savings>();
+        acc6.set_details(10005, "Gerald", 23235);
+
+        Account& acc7 = am.add_account<Checking>();
+        acc7.set_details(10006, "Kane", 34467);
+
+        Account& acc8 = am.add_account<Checking>();
+        acc8.set_details(10007, "Jude", 34478);
+
+        Account& acc9 = am.add_account<Checking>();
+        acc9.set_details(10008, "Declan", 24578);
+
+        Account& acc10 = am.add_account<Savings>();
+        acc10.set_details(10009, "James", 36578);
+
         std::vector<int> elements = {10000, 10001, 10002, 10003, 10004, 10005, 10006, 10007, 
-        10008, 10009, 10010, 10011};
+        10008, 10009};
+
         int num_transactions = 1;
         while(num_transactions <= num_trans_sim)
         {
@@ -211,8 +261,8 @@ int main()
             int source_location = source_account_num % 10000;
             int target_location = target_account_num % 10000;
                     
-            std::unique_ptr<TransactionBase> ptr_trans1 = std::make_unique<Transaction<decltype(*(accounts[source_location])), decltype(*(accounts[target_location]))>> 
-            (*(accounts[source_location]), *(accounts[target_location]), transfer_amount);
+            std::unique_ptr<TransactionBase> ptr_trans1 = std::make_unique<Transaction<decltype(am.get_account(source_account_num)), decltype(am.get_account(target_account_num))>> 
+            (am.get_account(source_account_num), am.get_account(target_account_num), transfer_amount);
 
             tmanager.enqueue_transaction(std::move(ptr_trans1));
             tlogs.record_transaction(source_account_num, target_account_num, transfer_amount);
@@ -224,7 +274,7 @@ int main()
         tmanager.complete_all_transactions();
 
         tlogs.display_transactions();
-        for(auto& acc : accounts)
+        for(auto& acc : am.accounts)
         {
             std::cout << *acc << std::endl;
         }

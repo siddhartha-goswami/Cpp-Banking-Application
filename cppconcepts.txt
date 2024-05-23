@@ -1,42 +1,17 @@
-1. Variadics (show info for all acc)
+1. Abstract factory pattern to create accounts of different types ✅
 
-2. Streams, buffers and regular expressions (to write transaction/
+2. Type traits (allows transaction, allows withdrawals, allows display, bears interest)
+
+3. Concepts (to constrain transactions, withdrawals, displays and interest calculation)
+
+4. Streams, buffers and regular expressions (to write transaction/
 account info to a file and search using regex)
 
-3. Type traits (allows transaction, allows withdrawals, allows display, bears interest)
+Phase 1- Account creation and storing using factory pattern ✅
+Phase 2- Defining type traits and concepts on transactions
+Phase 3- Writing stream and regex to write transaction info
 
-4. Concepts (to constrain transactions, displays and interest calculation)
-
-Account management and info module
-Transaction logging module
-Transaction validation module
-
-(Fixed deposit (does not allow withdrawals))
-Priority account (can only transact with other priority accounts)
-
-/*
-template<typename AccountType>
-class InterestCalculator;
-
-// Specialization for Savings Account
-template<>
-class InterestCalculator<SavingsAccount> {
-public:
-    static double calculateInterest(double balance) {
-        return balance * 0.03;  // 3% interest rate
-    }
-};
-
-// Specialization for Fixed Deposit Account
-template<>
-class InterestCalculator<FixedDepositAccount> {
-public:
-    static double calculateInterest(double balance) {
-        return balance * 0.05;  // 5% interest rate
-    }
-};
-
-// Usage
-double savingsInterest = InterestCalculator<SavingsAccount>::calculateInterest(1000);
-double fixedInterest = InterestCalculator<FixedDepositAccount>::calculateInterest(1000);
-*/
+Checking account does not allow interest
+Fixed deposit does not allow transactions
+Priority account can only transact with other priority accounts
+You cannot display info for priority account

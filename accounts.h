@@ -17,6 +17,8 @@ class Account
 
     public:
 
+    Account() {}
+
     Account(int acc_num, std::string acc_holder, double acc_bal) : 
     account_number(acc_num), account_holder_name(acc_holder), account_balance(acc_bal) {}
 
@@ -76,21 +78,29 @@ class Account
         std::lock_guard lock_account(account_balance_m);
         return account_balance;
     }
+
+    void set_details(int acc_num, std::string name, double initial_bal)
+    {
+        this->account_number = acc_num;
+        this->account_holder_name = name;
+        this->account_balance = initial_bal;
+    }
 };
 
 class Checking : public Account
 {
     private:
-    double overdraft_limit;
+    double overdraft_limit = 1000;
 
     template<typename FromAcc, typename ToAcc>
     friend class Transaction;
 
     public:
 
+    Checking() {}
+
     template<typename... Args>
-    Checking(double overdraft_lim, Args&&... args) :
-    overdraft_limit(overdraft_lim), Account(std::forward<Args>(args)...) {}
+    Checking(Args&&... args) : Account(std::forward<Args>(args)...) {}
 
     bool withdraw(double amount) override
     {
@@ -111,17 +121,18 @@ class Checking : public Account
 class Savings : public Account
 {
     private:
-    double interest_rate;
-    double withdraw_limit;
+    double interest_rate = 3;
+    double withdraw_limit = 1000;
 
     template<typename FromAcc, typename ToAcc>
     friend class Transaction;
 
     public:
 
+    Savings() {}
+
     template<typename... Args>
-    Savings(double rate, double withdraw_lim, Args&&... args) :
-    interest_rate(rate), withdraw_limit(withdraw_lim), Account(std::forward<Args>(args)...) {}
+    Savings(Args&&... args) : Account(std::forward<Args>(args)...) {}
 
     bool withdraw(double amount) override
     {
@@ -153,16 +164,17 @@ class Savings : public Account
 class FixedDeposit : public Account
 {
     private:
-    double interest_rate;
+    double interest_rate = 7;
 
     template<typename FromAcc, typename ToAcc>
     friend class Transaction;
 
     public:
 
+    FixedDeposit() {}
+
     template<typename... Args>
-    FixedDeposit(double rate, Args&&... args) :
-    interest_rate(rate), Account(std::forward<Args>(args)...) {}
+    FixedDeposit(Args&&... args) : Account(std::forward<Args>(args)...) {}
 
     bool withdraw(double amount) override
     {
@@ -179,16 +191,17 @@ class FixedDeposit : public Account
 class Priority : public Account
 {
     private:
-    double interest_rate;
+    double interest_rate = 10;
 
     template<typename FromAcc, typename ToAcc>
     friend class Transaction;
 
     public:
 
+    Priority() {}
+
     template<typename... Args>
-    Priority(double rate, Args&&... args) :
-    interest_rate(rate), Account(std::forward<Args>(args)...) {}
+    Priority(Args&&... args) : Account(std::forward<Args>(args)...) {}
 
     bool withdraw(double amount) override
     {
