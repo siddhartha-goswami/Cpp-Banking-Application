@@ -1,6 +1,8 @@
 #include "transactions.h"
 #include <iostream>
+#include <fstream>
 #include <future>
+#include <regex>
 #include <thread>
 #include <random>
 #include <memory>
@@ -16,6 +18,7 @@ int main()
     AccountManager am;
     TransactionManager tmanager;
     TransactionLogs tlogs;
+    std::ofstream outputfile("Transactions.txt", std::ios::app);
 
     int mode = 0;
     std::cout << "For interactive mode, select 1. For simulation mode, select 2. \n";
@@ -68,7 +71,8 @@ int main()
             std::cout << "2. Make a transaction\n";
             std::cout << "3. View transaction logs\n";
             std::cout << "4. Add interest to accounts\n";
-            std::cout << "5. Exit\n";
+            std::cout << "5. Search transactions by name or account number\n";
+            std::cout << "6. Exit\n";
             std::cout << "Choose an option: \n";
             std::cin >> option;
 
@@ -129,6 +133,7 @@ int main()
 
                     tmanager.enqueue_transaction(std::move(ptr_trans1));
                     tlogs.record_transaction(source, source, deposit_amount);
+                    outputfile << "Deposit to account number " << source << " belonging to " << am.get_account(source).get_accountholder() << " of amount- " << deposit_amount << std::endl;
                 }
 
                 else if(transaction_option == 2)
@@ -146,6 +151,7 @@ int main()
 
                     tmanager.enqueue_transaction(std::move(ptr_trans1));
                     tlogs.record_transaction(source, source, withdrawal_amount);
+                    outputfile << "Withdrawal from account number " << source << " belonging to " << am.get_account(source).get_accountholder() << " of amount- " << withdrawal_amount << std::endl;
                 }
                 
                 else if(transaction_option == 3)
@@ -170,6 +176,8 @@ int main()
                     
                     tmanager.enqueue_transaction(std::move(ptr_trans1));
                     tlogs.record_transaction(source, target, transfer_amount);
+                    outputfile << "Sending from account number " << source << " belonging to " << am.get_account(source).get_accountholder()
+                    << " to account number " << target << " belonging to " << am.get_account(target).get_accountholder() << " of amount- " << transfer_amount << std::endl;
                 }
                 
             } 
@@ -194,8 +202,33 @@ int main()
                     }
                 }
             }
-            
+
             else if (option == 5)
+            {
+                std::ifstream inputfile("Transactions.txt");
+                std::ofstream specificoutputfile("RequiredTransactions.txt");
+
+                std::string name_or_accnumber;
+                std::cout << "Enter account holder name or account number to filter transactions- \n";
+                std::cin >> name_or_accnumber;
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+                std::regex namenum_regex(name_or_accnumber);
+
+                std::string line;
+                while(std::getline(inputfile, line))
+                {
+                    if(std::regex_search(line, namenum_regex))
+                    {
+                        specificoutputfile << line << std::endl;
+                    }
+                }
+
+                inputfile.close();
+                specificoutputfile.close();
+            }
+            
+            else if (option == 6)
             {
                 for(auto& acc : am.accounts)
                 {
@@ -210,6 +243,8 @@ int main()
                 std::cout << "Invalid option. Please choose a valid option.\n";
             }
         }
+
+        outputfile.close();
     }
 
     else if(mode == 2)

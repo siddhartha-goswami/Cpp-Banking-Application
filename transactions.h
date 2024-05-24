@@ -4,6 +4,7 @@
 #include <string>
 #include <mutex>
 #include <iostream>
+#include <cmath>
 #include <future>
 #include <condition_variable>
 #include <stdlib.h>
@@ -88,7 +89,7 @@ class SelfTransaction : public TransactionBase
 
             else
             {
-                deposit_success = source_acc.withdraw(transaction_amount);
+                deposit_success = source_acc.withdraw(std::abs(transaction_amount));
             }
 
             return deposit_success;

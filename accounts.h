@@ -88,6 +88,11 @@ class Account
     virtual void add_interest() = 0;
 
     virtual std::string get_acctypename() = 0;
+
+    std::string get_accountholder()
+    {
+        return account_holder_name;
+    }
 };
 
 class Checking : public Account
