@@ -67,7 +67,8 @@ int main()
             std::cout << "1. Create a new account\n";
             std::cout << "2. Make a transaction\n";
             std::cout << "3. View transaction logs\n";
-            std::cout << "4. Exit\n";
+            std::cout << "4. Add interest to accounts\n";
+            std::cout << "5. Exit\n";
             std::cout << "Choose an option: \n";
             std::cin >> option;
 
@@ -177,9 +178,24 @@ int main()
             {
                 tlogs.display_transactions();
             }
-            
-            
+
             else if (option == 4) 
+            {
+                for(auto& acc : am.accounts)
+                {   
+                    if((*acc).get_acctypename() == "Savings")
+                    {
+                        calc_add_interest<Savings>(dynamic_cast<Savings&>(*acc));
+                    }
+
+                    else if((*acc).get_acctypename() == "FixedDeposit")
+                    {
+                        calc_add_interest<FixedDeposit>(dynamic_cast<FixedDeposit&>(*acc));
+                    }
+                }
+            }
+            
+            else if (option == 5)
             {
                 for(auto& acc : am.accounts)
                 {
@@ -251,22 +267,19 @@ int main()
             int source_location = source_account_num % 10000;
             int target_location = target_account_num % 10000;
 
-            if((am.get_account(source_account_num).accType == "Checking" || am.get_account(source_account_num).accType == "Savings")
-            && (am.get_account(target_account_num).accType == "Checking" || am.get_account(target_account_num).accType == "Savings"))
+            if((am.get_account(source_account_num).get_acctypename() == "Checking" || am.get_account(source_account_num).get_acctypename() == "Savings")
+            && (am.get_account(target_account_num).get_acctypename() == "Checking" || am.get_account(target_account_num).get_acctypename() == "Savings"))
             {
                 if constexpr (!(allows_transaction<std::remove_reference_t<Checking&>>::value && allows_transaction<std::remove_reference_t<Savings&>>::value))
                 {
-                    num_transactions++;
                     continue;
                 }
             }
             
-            if((am.get_account(source_account_num).accType == "FixedDeposit" || am.get_account(target_account_num).accType == "FixedDeposit"))
+            if((am.get_account(source_account_num).get_acctypename() == "FixedDeposit" || am.get_account(target_account_num).get_acctypename() == "FixedDeposit"))
             {
                 if constexpr (!(allows_transaction<std::remove_reference_t<FixedDeposit&>>::value))
                 {
-                    num_transactions++;
-                    std::cout << "Came here\n";
                     continue;
                 }
             }

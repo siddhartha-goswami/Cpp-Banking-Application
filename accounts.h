@@ -7,6 +7,7 @@
 #include <mutex>
 #include <chrono>
 #include <type_traits>
+#include <concepts>
 
 class Account
 {
@@ -83,13 +84,17 @@ class Account
         this->account_holder_name = name;
         this->account_balance = initial_bal;
     }
+
+    virtual void add_interest() = 0;
+
+    virtual std::string get_acctypename() = 0;
 };
 
 class Checking : public Account
 {
     private:
     double overdraft_limit = 1000;
-    std::string accType = "Savings";
+    std::string accType = "Checking";
 
     template<typename FromAcc, typename ToAcc>
     friend class Transaction;
@@ -129,6 +134,14 @@ class Checking : public Account
             std::cout << "Cannot deposit negative amount" << std::endl;
             return false;
         }
+    }
+
+    void add_interest() override
+    {}
+
+    std::string get_acctypename()
+    {
+        return accType;
     }
 };
 
@@ -183,6 +196,16 @@ class Savings : public Account
             return false;
         }
     }
+
+    void add_interest() override
+    {
+        account_balance += account_balance*interest_rate/100;
+    }
+
+    std::string get_acctypename()
+    {
+        return accType;
+    }
 };
 
 class FixedDeposit : public Account
@@ -209,6 +232,16 @@ class FixedDeposit : public Account
     bool withdraw(double amount) override
     {
         return false;
+    }
+
+    void add_interest() override
+    {
+        account_balance += account_balance*interest_rate/100;
+    }
+
+    std::string get_acctypename()
+    {
+        return accType;
     }
 };
 
@@ -243,7 +276,7 @@ template <typename AccType>
 requires BearsInterest<AccType>
 void calc_add_interest(AccType& acc)
 {
-    acc.account_balance += acc.account_balance * acc.interest_rate/100;
+    acc.add_interest();
 }
 
 #endif

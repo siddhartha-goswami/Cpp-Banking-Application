@@ -2,13 +2,13 @@
 
 2. Type traits (allows transaction, bears interest) ✅
 
-3. Concepts (to constrain interest calculation)
+3. Concepts (to constrain interest calculation) ✅
 
 4. Streams and regular expressions (to write transaction/
 account info to a file and search using regex)
 
 Phase 1- Account creation and storing using factory pattern ✅
-Phase 2- Defining type traits and concepts on transactions
+Phase 2- Defining type traits and concepts on transactions ✅
 Phase 3- Writing stream and regex to write transaction info
 
 Checking account does not allow interest
