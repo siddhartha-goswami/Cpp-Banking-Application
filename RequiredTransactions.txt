@@ -1,2 +1,0 @@
-Withdrawal from account number 10002 belonging to Prudhvi of amount- 167
-Sending from account number 10002 belonging to Prudhvi to account number 10000 belonging to Siddhartha of amount- 167
