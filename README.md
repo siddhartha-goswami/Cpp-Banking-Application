@@ -1,2 +1,0 @@
-# Cpp_Banking_Application
-Banking_Application
