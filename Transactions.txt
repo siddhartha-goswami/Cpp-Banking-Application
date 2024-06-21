@@ -1,6 +1,0 @@
-Deposit to account number 10000 belonging to Siddhartha of amount- 4000
-Deposit to account number 10001 belonging to Sukruth of amount- 474
-Deposit to account number 10003 belonging to Rishi of amount- 207
-Withdrawal from account number 10002 belonging to Prudhvi of amount- 167
-Sending from account number 10002 belonging to Prudhvi to account number 10000 belonging to Siddhartha of amount- 167
-Withdrawal from account number 10000 belonging to Siddhartha of amount- 20
